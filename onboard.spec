@@ -3,7 +3,7 @@ Version:        0.94.0
 Release:        %mkrel 1
 Summary:        Simple on-screen Keyboard
 
-Group:          User Interface/Desktops
+Group:          System/X11
 License:        GPLv2+
 URL:            https://launchpad.net/onboard/
 Source0:        http://launchpad.net/%{name}/0.94/%{version}/+download/%{name}-%{version}.tar.gz
