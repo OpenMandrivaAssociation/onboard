@@ -1,0 +1,10 @@
+--- onboard-0.94.0/setup.py	2010-08-20 15:46:34.000000000 +0200
++++ onboard-0.94.0/setup.py.orig	2010-11-25 22:20:41.676486458 +0100
+@@ -14,6 +14,7 @@ required_ver = version.StrictVersion('2.
+ assert current_ver >= required_ver , 'needs DistUtilsExtra.auto >= 2.12'
+ 
+ DistUtilsExtra.auto.setup(
++    requires = [],
+     name = 'onboard',
+     version = '0.94.0',
+     author = 'Chris Jones',
