@@ -1,6 +1,6 @@
 Name:           onboard
 Version:        0.94.0
-Release:        %mkrel 1
+Release:        2
 Summary:        Simple on-screen Keyboard
 
 Group:          System/X11
@@ -12,7 +12,6 @@ Source0:        http://launchpad.net/%{name}/0.94/%{version}/+download/%{name}-%
 Patch0:         onboard-norequires.patch
 # To build the .desktop files. This can be upstreamed:
 Patch1:         onboard-setup.patch
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 
 BuildRequires:  python-devel
@@ -26,7 +25,7 @@ BuildRequires:  gettext
 BuildRequires:  libxi-devel
 
 Requires:       hicolor-icon-theme
-Requires:       pycairo
+Requires:       python-cairo
 Requires:       python-virtkey
 
 BuildRequires:  GConf2
@@ -128,4 +127,12 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{python_sitelib}/Onboard/
 %{python_sitelib}/%{name}*.egg-info
 
+
+
+
+%changelog
+* Fri Jan 07 2011 Antoine Ginies <aginies@mandriva.com> 0.94.0-1mdv2011.0
++ Revision: 629470
+- fix group
+- import onboard
 
