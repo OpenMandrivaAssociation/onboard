@@ -9,7 +9,6 @@ URL:            https://launchpad.net/onboard/
 Source0:        http://launchpad.net/%{name}/%{vmaj}/%{version}/+download/%{name}-%{version}.tar.gz
 Patch0:         linking.patch
 Patch1:         0001-Port-to-Ayatana-AppIndicator.patch
-BuildArch:      noarch
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
