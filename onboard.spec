@@ -1,131 +1,132 @@
 Name:           onboard
-Version:        0.94.0
-Release:        3
+Version:        1.4.1
+Release:        1
 Summary:        Simple on-screen Keyboard
 
 Group:          System/X11
 License:        GPLv2+
 URL:            https://launchpad.net/onboard/
-Source0:        http://launchpad.net/%{name}/0.94/%{version}/+download/%{name}-%{version}.tar.gz
-# This is required to not initialize objects of the required libraries. Otherwise
-# the setup needs a running X session
-Patch0:         onboard-norequires.patch
-# To build the .desktop files. This can be upstreamed:
-Patch1:         onboard-setup.patch
+Source0:        http://launchpad.net/%{name}/%{vmaj}/%{version}/+download/%{name}-%{version}.tar.gz
+Patch0:         linking.patch
+Patch1:         0001-Port-to-Ayatana-AppIndicator.patch
 BuildArch:      noarch
 
-BuildRequires:  python-devel
-BuildRequires:  gnome-python-gconf
-BuildRequires:  pygtk2.0-devel
-BuildRequires:  python-distutils-extra
-BuildRequires:  intltool
-BuildRequires:  python-setuptools
 BuildRequires:  desktop-file-utils
 BuildRequires:  gettext
-BuildRequires:  libxi-devel
+BuildRequires:  intltool
+BuildRequires:  pkgconfig(xi)
+BuildRequires:  pkgconfig(dconf)
+BuildRequires:  pkgconfig(gdk-3.0)
+BuildRequires:  pkgconfig(hunspell)
+BuildRequires:  pkgconfig(libcanberra)
+BuildRequires:  pkgconfig(libudev)
+BuildRequires:  pkgconfig(xkbfile)
+BuildRequires:  pkgconfig(xtst)
+BuildRequires:  pkgconfig(python)
+BuildRequires:  python3dist(python-distutils-extra)
+BuildRequires:  python3dist(setuptools)
 
+Requires:       at-spi2-atk
+Requires:       fonts-ttf-dejavu
+Requires:       fonts-ttf-mageia
 Requires:       hicolor-icon-theme
-Requires:       python-cairo
-Requires:       python-virtkey
-
-BuildRequires:  GConf2
-Requires(pre):  GConf2
-Requires(post): GConf2
-Requires(preun): GConf2
-
+Requires:       mousetweaks
+Requires:       python3dist(pycairo)
+Requires:       python3dist(dbus-python)
+Requires:       python3dist(pygobject)
+Requires:       iso-codes
 
 %description
 An on-screen keyboard useful on tablet PCs or for mobility impaired users.
 
 
+%package -n gnome-shell-extensions-%{name}
+Summary:        Shell extension for gnome
+Conflicts:      onboard < 1.2
+
+%description -n gnome-shell-extensions-%{name}
+Shell extension for gnome.
+
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
+%autopatch -p1
 
 %build
-%{__python} setup.py build
-
+%py3_build
 
 %install
-rm -rf %{buildroot}
-%{__python} setup.py install --root=%{buildroot}
-#fix wrong permissons
-chmod a+x %{buildroot}%{_datadir}/onboard/layoutstrings.py
-for file in %{buildroot}%{python_sitelib}/Onboard/{settings,IconPalette,KeyboardSVG,utils}.py; do
-   chmod a+x $file
-done
+%py3_install
 
-
+# Use example default configuration file
+mkdir -p %{buildroot}%{_sysconfdir}/%{name}
+cp %{buildroot}%{_datadir}/%{name}/%{name}-defaults.conf.example %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+# Swich to full keyboard
+sed -i 's/#layout=Full Keyboard/layout=Full Keyboard/' %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+sed -i 's/layout=Compact/#layout=Compact/' %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+# Use superkey label
+sed -i 's/superkey-label=.*$/superkey-label=/' %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+# Switch font to DejaVu-Sans
+sed -i 's/^key-label-font=.*$/key-label-font=DejaVu Sans/' %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+# Configuration change for patch0 (StatusIconProvider.patch)
+sed -i '/\[main\]/a status-icon-provider=GtkStatusIcon' %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+# Enable icon-palette for gnome3 or on closing keyboard there is no visible activation method
+sed -i '/\[icon-palette\]/a in-use=True' %{buildroot}%{_sysconfdir}/%{name}/%{name}-defaults.conf
+# Remove Ubuntu icons
+rm -rf %{buildroot}%{_iconsdir}/ubuntu*
+# Desktop files
 mkdir -p %{buildroot}%{_datadir}/applications
 desktop-file-install                                    \
     --remove-category="X-GNOME-PersonalSettings"        \
     --add-category="Utility;"                           \
     --dir=%{buildroot}%{_datadir}/applications          \
-    %{buildroot}%{_datadir}/applications/%{name}.desktop
+    %{_builddir}/%{name}-%{version}/build/share/applications/%{name}.desktop
+
 desktop-file-install                                    \
     --remove-category="X-GNOME-PersonalSettings"        \
+    --remove-category="Settings"                        \
     --add-category="Utility;"                           \
     --dir=%{buildroot}%{_datadir}/applications          \
-    %{buildroot}%{_datadir}/applications/%{name}-settings.desktop
+    %{_builddir}/%{name}-%{version}/build/share/applications/%{name}-settings.desktop
+
+# Desktop files autostart
+mkdir -p %{buildroot}%{_sysconfdir}/xdg/autostart
+desktop-file-install                                    \
+    --add-category="Utility;"                           \
+    --dir=%{buildroot}%{_sysconfdir}/xdg/autostart                  \
+    %{_builddir}/%{name}-%{version}/build/share/autostart/%{name}-autostart.desktop
 
 mkdir -p %{buildroot}%{_datadir}/locale
 cp -a build/mo/* %{buildroot}%{_datadir}/locale
-%find_lang %{name}
 
-# Move schemas to the correct location
-mkdir %{buildroot}/%{_sysconfdir}
-mv %{buildroot}/%{_datadir}/gconf/ %{buildroot}/%{_sysconfdir}/
-
-
-%clean
-rm -rf %{buildroot}
-
-%pre
-if [ "$1" -gt 1 ] ; then
-export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
-gconftool-2 --makefile-uninstall-rule \
-%{_sysconfdir}/gconf/schemas/%name.schemas >/dev/null || :
-fi
-
-%post
-export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
-gconftool-2 --makefile-install-rule \
-%{_sysconfdir}/gconf/schemas/%name.schemas > /dev/null || :
-touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-update-desktop-database &> /dev/null || :
-
-%preun
-if [ "$1" -eq 0 ] ; then
-export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
-gconftool-2 --makefile-uninstall-rule \
-%{_sysconfdir}/gconf/schemas/%name.schemas > /dev/null || :
-fi
-
-%postun
-if [ $1 -eq 0 ] ; then
-    touch --no-create %{_datadir}/icons/hicolor &>/dev/null
-    gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
-fi
-update-desktop-database &> /dev/null || :
-
-%posttrans
-gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
-
+%find_lang %{name} --with-gnome
 
 %files -f %{name}.lang
-%defattr(-,root,root,-)
-%doc AUTHORS COPYING NEWS README docs/
+%doc AUTHORS COPYING NEWS README
 %{_bindir}/%{name}
 %{_bindir}/%{name}-settings
-%{_datadir}/%{name}/
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/applications/%{name}-settings.desktop
-%{_sysconfdir}/gconf/schemas/onboard.schemas
-%{_datadir}/icons/hicolor/scalable/apps/onboard.svg
-%{_datadir}/icons/hicolor/scalable/apps/onboard2.svg
-%{python_sitelib}/Onboard/
-%{python_sitelib}/%{name}*.egg-info
+%{_datadir}/glib-2.0/schemas/org.%{name}.gschema.xml
+%{_datadir}/dbus-1/services/org.%{name}.Onboard.service
+%{_iconsdir}/hicolor/scalable/apps/%{name}.svg
+%{_iconsdir}/HighContrast/scalable/apps/%{name}.svg
+%{_iconsdir}/hicolor/22x22/apps/%{name}.png
+%{_iconsdir}/hicolor/16x16/apps/%{name}.png
+%{_iconsdir}/hicolor/24x24/apps/%{name}.png
+%{_iconsdir}/hicolor/28x28/apps/%{name}.png
+%{_iconsdir}/hicolor/32x32/apps/%{name}.png
+%{_datadir}/%{name}/
+%{_datadir}/sounds/freedesktop/stereo/%{name}-key-feedback.oga
+%{python_sitearch}/%{name}*.egg-info
+%{python_sitearch}/Onboard/
+%{_sysconfdir}/xdg/autostart/%{name}-autostart.desktop
+%dir %{_sysconfdir}/%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}-defaults.conf
+%{_mandir}/man1/onboard*
+
+
+%files -n gnome-shell-extensions-%{name}
+%{_datadir}/gnome-shell/extensions/Onboard_Indicator@onboard.org/
 
 
 
