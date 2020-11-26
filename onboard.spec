@@ -27,11 +27,10 @@ BuildRequires:  python3dist(setuptools)
 
 Requires:       at-spi2-atk
 Requires:       fonts-ttf-dejavu
-Requires:       fonts-ttf-mageia
 Requires:       hicolor-icon-theme
 Requires:       mousetweaks
 Requires:       python3dist(pycairo)
-Requires:       python3dist(dbus-python)
+Requires:       python-dbus
 Requires:       python3dist(pygobject)
 Requires:       iso-codes
 
