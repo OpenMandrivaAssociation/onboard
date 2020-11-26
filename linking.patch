@@ -1,0 +1,21 @@
+diff --git a/setup.py b/setup.py
+index af66f17..76c1251 100755
+--- a/setup.py
++++ b/setup.py
+@@ -99,6 +99,7 @@ def pkgconfig(*packages, **kw):
+             kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
+         else:
+             kw.setdefault('extra_link_args', []).append(token)
++    kw.setdefault('libraries', []).append('m')
+     for k, v in kw.items():
+         # keep sorted for reproducible builds in Debian (LP: #1530519)
+         kw[k] = sorted(list(set(v)))
+@@ -235,7 +235,7 @@ class Extension_osk(Extension):
+                                "-Wdeclaration-after-statement",
+                                "-Werror=declaration-after-statement"],
+ 
+-                           **pkgconfig('gdk-3.0', 'x11', 'xi', 'xtst', 'xkbfile',
++                           **pkgconfig('gdk-3.0', 'x11', 'xi', 'xtst', 'xkbcommon', 'xkbfile', 'wayland-client',
+                                        'dconf', 'libcanberra', 'hunspell',
+                                        'libudev')
+                            )
