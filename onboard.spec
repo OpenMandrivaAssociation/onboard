@@ -1,6 +1,6 @@
 Name:           onboard
 Version:        1.4.1
-Release:        5
+Release:        6
 Summary:        Simple on-screen Keyboard
 
 Group:          System/X11
